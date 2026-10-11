@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEON FIST · 霓虹铁拳</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>👊</text></svg>" />
+  <script type="module" crossorigin src="./assets/index-DgWn7LfL.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-Ce1Bic8J.css">
+</head>
+<body>
+  <canvas id="game-canvas"></canvas>
+
+  <!-- 加载屏 -->
+  <div id="loading">
+    <div class="loading-title">NEON<span>FIST</span></div>
+    <div class="loading-sub">霓 虹 铁 拳</div>
+    <div class="loading-bar"><div id="loading-fill"></div></div>
+    <div id="loading-tip">正在预热竞技场…</div>
+  </div>
+
+  <!-- 主菜单 -->
+  <div id="menu" class="screen hidden">
+    <div class="menu-logo">NEON<span>FIST</span></div>
+    <div class="menu-sub">霓 虹 铁 拳 · 3D 格斗竞技场</div>
+    <div class="menu-buttons">
+      <div class="stage-row">
+        <button id="char-prev" class="btn-arrow">◀</button>
+        <div class="char-card">
+          <div class="char-title-row"><span id="char-title">西方吸血鬼</span></div>
+          <div class="char-name" id="char-name">血伯爵 · DUKE CRIMSON</div>
+          <div class="char-lore" id="char-lore">暗夜古堡的不朽领主。以鲜血为契，越战越强，夜色是他的疆土。</div>
+          <div class="char-skills" id="char-skills"></div>
+        </div>
+        <button id="char-next" class="btn-arrow">▶</button>
+      </div>
+      <button id="btn-vs-ai" class="btn btn-primary">单 人 对 战 <small>VS AI</small></button>
+      <button id="btn-training" class="btn">训 练 模 式 <small>无限血量 · 出招表 H</small></button>
+      <button id="btn-online" class="btn">联 网 匹 配 <small>COMING SOON</small></button>
+      <div class="stage-row">
+        <button id="stage-prev" class="btn-arrow">◀</button>
+        <div class="stage-name">场景 · <span id="stage-name">霓虹天台</span></div>
+        <button id="stage-next" class="btn-arrow">▶</button>
+      </div>
+      <button id="btn-diff" class="btn btn-small">AI 难度：普通</button>
+    </div>
+    <div class="menu-controls">
+      <div class="ctl-col">
+        <h3>基础操作</h3>
+        <table>
+          <tr><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></td><td>移动</td></tr>
+          <tr><td><kbd>左键</kbd>点按</td><td>轻拳</td></tr>
+          <tr><td><kbd>左键</kbd>长按</td><td>蓄力 → 重拳（满蓄破防）</td></tr>
+          <tr><td><kbd>右键</kbd></td><td>格挡</td></tr>
+          <tr><td><kbd>Shift</kbd></td><td>冲刺</td></tr>
+          <tr><td><kbd>Shift</kbd>+<kbd>左键</kbd></td><td>冲刺飞踢</td></tr>
+          <tr><td><kbd>Q</kbd></td><td>扫腿</td></tr>
+        </table>
+      </div>
+      <div class="ctl-col">
+        <h3>技能 · 能量条制</h3>
+        <table>
+          <tr><td><kbd>1</kbd></td><td>免费起手技（伤害最低）</td></tr>
+          <tr><td><kbd>2</kbd></td><td>消耗 55 能量</td></tr>
+          <tr><td><kbd>3</kbd></td><td>消耗 85 能量 · 大招</td></tr>
+        </table>
+        <div class="ctl-note">能量只能靠【命中敌人】和【精准格挡】积攒<br>右键格挡瞬间 → 精准格挡：反制 10% 最大生命</div>
+      </div>
+    </div>
+    <div class="menu-foot">H 出招表 · Esc 暂停 · 三局两胜 · 模型与动画：Adobe Mixamo · 特效贴图：Kenney (CC0) / ComfyUI · 引擎：three.js</div>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div class="hp-wrap left">
+      <div class="hp-name" id="name1">AZURE-01</div>
+      <div class="hp-bar">
+        <div class="hp-trail" id="trail1"></div>
+        <div class="hp-fill p1" id="hp1"></div>
+      </div>
+      <div class="hp-pips" id="pips1"><i></i><i></i></div>
+    </div>
+    <div id="timer-box">
+      <div id="timer">60</div>
+      <div id="round-label">ROUND 1</div>
+    </div>
+    <div class="hp-wrap right">
+      <div class="hp-name" id="name2">CRIMSON-02</div>
+      <div class="hp-bar">
+        <div class="hp-trail" id="trail2"></div>
+        <div class="hp-fill p2" id="hp2"></div>
+      </div>
+      <div class="hp-pips" id="pips2"><i></i><i></i></div>
+    </div>
+    <div id="combo1" class="combo left"></div>
+    <div id="combo2" class="combo right"></div>
+    <div id="banner"></div>
+    <div id="dmg-layer"></div>
+    <div id="energybar" data-label="血"><div id="energy-fill"></div></div>
+    <div id="skillbar">
+      <div class="skill" id="sk-thunder"><i>⚡</i><b>1</b><div class="cd"></div></div>
+      <div class="skill" id="sk-flame"><i>🔥</i><b>2</b><div class="cd"></div></div>
+      <div class="skill" id="sk-shadow"><i>👥</i><b>3</b><div class="cd"></div></div>
+    </div>
+    <div id="chargebar" class="hidden"><div id="charge-fill"></div></div>
+    <div id="focus-hint" class="hidden">⌨ 鼠标键盘未聚焦 —— 点击画面恢复操控</div>
+    <div id="hint-p1" class="hint">WASD 移动 · 左键攻击（长按蓄力）· 右键格挡 · Shift 冲刺 · Shift+左键 飞踢 · Q 扫腿 · 1/2/3 技能</div>
+  </div>
+
+  <!-- 暂停 -->
+  <div id="pause" class="screen hidden">
+    <div class="pause-title">已 暂 停</div>
+    <div class="menu-buttons">
+      <button id="btn-resume" class="btn btn-primary">继 续</button>
+      <button id="btn-quit" class="btn">回主菜单</button>
+    </div>
+  </div>
+
+  <!-- 胜利 -->
+  <div id="victory" class="screen hidden">
+    <div id="victory-title">AZURE-01</div>
+    <div class="victory-sub">WINNER</div>
+    <div class="menu-buttons">
+      <button id="btn-rematch" class="btn btn-primary">再 来 一 局</button>
+      <button id="btn-menu" class="btn">回主菜单</button>
+    </div>
+  </div>
+
+  <!-- 联机 -->
+  <div id="netpanel" class="screen hidden">
+    <div class="pause-title" style="font-size:38px">联网对战 · 口令码直连（跨网络）</div>
+    <div class="net-grid">
+      <div class="net-box">
+        <h3>我是房主</h3>
+        <button id="net-create" class="btn btn-small">① 生成房间口令</button>
+        <textarea id="net-code" readonly placeholder="口令码出现后：复制 → 微信/QQ 发给好友"></textarea>
+        <button id="net-code-copy" class="btn btn-small">复制口令</button>
+        <div id="net-answer-row" class="hidden">
+          <textarea id="net-answer-input" placeholder="房主：把好友发回的回应码粘贴到这里"></textarea>
+          <button id="net-accept" class="btn btn-small">② 完成连接</button>
+        </div>
+      </div>
+      <div class="net-box">
+        <h3>我是挑战者</h3>
+        <textarea id="net-paste" placeholder="粘贴好友发来的房间口令"></textarea>
+        <button id="net-join" class="btn btn-small">② 生成回应码</button>
+        <textarea id="net-answer" readonly placeholder="回应码出现后：复制 → 发回给房主"></textarea>
+        <button id="net-answer-copy" class="btn btn-small">复制回应码</button>
+      </div>
+    </div>
+    <div id="net-state">双方各自选好角色，连接成功后由房主开战</div>
+    <div class="menu-buttons">
+      <button id="net-start" class="btn btn-primary hidden">开始网络对战</button>
+      <button id="net-back" class="btn btn-small">返回</button>
+    </div>
+  </div>
+
+  <!-- 出招表（H 切换 / 训练模式常驻） -->
+  <div id="movelist" class="hidden">
+    <div class="ml-card">
+      <div class="ml-title">出 招 表 <span id="ml-char">—</span></div>
+      <div class="ml-grid">
+        <div class="ml-col">
+          <h4>基础</h4>
+          <table>
+            <tr><td><kbd>W A S D</kbd></td><td>移动</td></tr>
+            <tr><td><kbd>左键</kbd>点按</td><td>轻拳（连段递减）</td></tr>
+            <tr><td><kbd>左键</kbd>长按</td><td>蓄力重拳 · 满蓄破防</td></tr>
+            <tr><td><kbd>右键</kbd></td><td>格挡</td></tr>
+            <tr><td><kbd>右键</kbd>时机</td><td>精准格挡 → 反制 10% 最大生命</td></tr>
+            <tr><td><kbd>Shift</kbd></td><td>冲刺</td></tr>
+            <tr><td><kbd>Shift</kbd>+<kbd>左键</kbd></td><td>冲刺飞踢</td></tr>
+            <tr><td><kbd>Q</kbd></td><td>扫腿</td></tr>
+          </table>
+        </div>
+        <div class="ml-col">
+          <h4>技能（能量条）</h4>
+          <table id="ml-skills"><tr><td>—</td><td>—</td></tr></table>
+          <h4 style="margin-top:14px">系统</h4>
+          <table>
+            <tr><td><kbd>H</kbd></td><td>出招表</td></tr>
+            <tr><td><kbd>Esc</kbd></td><td>暂停</td></tr>
+            <tr><td><kbd>M</kbd></td><td>静音</td></tr>
+            <tr><td>手柄</td><td>A 攻击 · B 格挡 · X 扫腿 · Y 冲刺<br>LB/RB/RT 技能 1/2/3 · Start 暂停</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="ml-note">能量只能通过命中敌人与精准格挡获得 · 技能击杀触发专属斩杀演出</div>
+    </div>
+  </div>
+
+</body>
+</html>
